@@ -1,10 +1,11 @@
 #include "JoystickControl.h"
 const int move_range = 20;
 
+
 void setupJoystick(int xaxis, int yaxis, int sw) {
   pinMode(xaxis, INPUT);
   pinMode(yaxis, INPUT);
-  pinMode(sw, INPUT);
+  pinMode(sw, INPUT_PULLUP);
   Serial.begin(9600);
 }
 
