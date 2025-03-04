@@ -25,11 +25,14 @@ int userX = 0, userY = 0;
 int length = 1;
 int userDirection = STABLE;
 
-
-bool ledState[ROWS][COLUMNS];
-
 LedControl lc = LedControl(11, 13, 10, 1);
 
+struct leds {
+  bool state;
+  byte nextStep;
+}; leds
+
+leds ledState[ROWS][COLUMNS];
 
 // Switch interrupt
 void handleSwitch() {
@@ -71,9 +74,14 @@ void setup() {
 
 
     setLedStates();
-    ledState[3][4] = true;
+
+    ledState[0][4] = true;
+    ledState[0][1] = true;
+    lc.setLed(0, 0, 4, true);
+    lc.setLed(0, 0, 1, true);
+
     lc.setLed(0, userY, userX, true);
-    lc.setLed(0, 3, 4, true);
+
     ledState[userY][userX] = true;
 
 }
