@@ -1,6 +1,9 @@
+// =============================== INCLUDE ===============================
 #include "JoystickControl.h"
 #include <LedControl.h>
+// =============================== INCLUDE ===============================
 
+// =============================== DEFINE ===============================
 #define PAUSE 0
 #define LEFT 1
 #define UP 2
@@ -10,31 +13,53 @@
 
 #define ROWS 8
 #define COLUMNS 8
+// =============================== DEFINE ===============================
 
+// =============================== CONST ===============================
 const int xaxis = A0;
 const int yaxis = A1;
 const int sw = 2;
 
 const long appleInterval = 1500;
 const long moveInterval = 300;
+// =============================== CONST ===============================
 
+// =============================== GLOBAL ===============================
 
 volatile bool isPaused = false;
 
 int userX = 0, userY = 0;
 int length = 1;
-int userDirection = STABLE;
+byte userDirection = STABLE;
 
 LedControl lc = LedControl(11, 13, 10, 1);
+// =============================== GLOBAL ===============================
 
-typedef struct leds * ledsPointer;
+// =============================== DECLARATOIN ===============================
+int get_Direction();
+void print_location(int, int);
+byte get_user_direction();
+bool isPoint(int, int);
+void go_down();
+void go_up();
+void go_left();
+void go_right();
+void switchPoints(int, int, int, int);
+void set_apple();
+
+
+// =============================== DECLARATOIN ===============================
+
+
+typedef struct leds *led;
 
 struct leds {
-  ledsPointer next;
-  ledsPointer previous;
+  led next;
+  led previous;
   bool state;
   byte nextStep;
-};
+  byte previousLoc;
+}; 
 
 leds ledState[ROWS][COLUMNS];
 
@@ -50,40 +75,57 @@ void handleSwitch() {
   toggle = !toggle;
 }
 
+// void makeEmptyLeds() {
+//   led l = (led)malloc(sizeof(struct node));
+//   l->next = null;
+//   l->previous = null;
+//   l->state = true;
+//   l->
+// }
+
 void setLedStates() {
   for (int i = 0; i < ROWS; i++){
     for (int j = 0; j < COLUMNS; j++){
       ledState[i][j].state = false;
       ledState[i][j].nextStep = STABLE;
+      ledState[i][j].next = nullptr;
+      ledState[i][j].previous = nullptr;
     }
   }
 }
 
-// void printLedStates() {
-//   for (int i = 0; i < ROWS; i++){
-//     for (int j = 0; j < COLUMNS; j++){
-//         Serial.print(ledState[i][j]);
-//         Serial.print(" ");
-//     }
-//     Serial.println("");
-//   }
-// }
+void printLedStates() {
+  Serial.println("=================================");
+  for (int i = 0; i < ROWS; i++){
+    for (int j = 0; j < COLUMNS; j++){ // nextStep
+        Serial.print(ledState[i][j].previousLoc);
+        Serial.print(" ");
+    }
+    Serial.println("");
+  }
+  Serial.println("=================================\n");
+}
 
 void setup() {
   setupJoystick(A0, A1, sw);
   attachInterrupt(digitalPinToInterrupt(sw), handleSwitch, FALLING); // interrupt for handling switch pressing ;
 
-    lc.shutdown(0, false);  // Turn on the MAX7219
-    lc.setIntensity(0, 8);  // Set brightness (0 to 15)
-    lc.clearDisplay(0);     // Clear the display
+  lc.shutdown(0, false);  // Turn on the MAX7219
+  lc.setIntensity(0, 8);  // Set brightness (0 to 15)
+  lc.clearDisplay(0);     // Clear the display
 
 
-    setLedStates();
+  setLedStates();
 
-    // ledState[0][4].state = true;
-    // ledState[0][1].state = true;
-    // lc.setLed(0, 0, 4, true);
-    // lc.setLed(0, 0, 1, true);
+    ledState[3][0].state = true;
+    ledState[5][0].state = true;
+    lc.setLed(0, 5, 0, true);
+    lc.setLed(0, 3, 0, true);
+
+    ledState[0][3].state = true;
+    ledState[0][5].state = true;
+    lc.setLed(0, 0, 3, true);
+    lc.setLed(0, 0, 5, true);
 
     lc.setLed(0, userY, userX, true);
     ledState[userY][userX].state = true;
@@ -142,8 +184,20 @@ void switchPoints(int userX0, int userY0, int userX1, int userY1) {
   lc.setLed(0, userY0, userX0, false);
   ledState[userY0][userX0].state = false;
   
-  ledState[userY1][userX1].state = true;
   lc.setLed(0, userY1, userX1, true);
+  ledState[userY1][userX1].state = true;
+
+  ledState[userY1][userX1].previousLoc = ledState[userY0][userX0].previousLoc;
+  // ledState[userY0][userX0].previousLoc = 0;
+
+  if (ledState[userY0][userX0].previous) {
+    ledState[userY0][userX0].next = &ledState[userY1][userX1];
+    ledState[userY1][userX1].previous = &ledState[userY0][userX0];
+  }
+  else {
+    ledState[userY0][userX0].next = nullptr;
+    ledState[userY1][userX1].previous = nullptr;
+  }
 }
 
 /*
@@ -151,7 +205,6 @@ RIGHT: switchPoints(userX - i, userY, userX - i + 1, userY);
 LEFT: switchPoints(userX + i, userY, userX + i - 1, userY);
 UP: switchPoints(userX, userY + i, userX, userY + i - 1);
 DOWN: switchPoints(userX, userY - i, userX, userY - i + 1);
-
 */
 
 
@@ -165,17 +218,50 @@ void go_right() {
   }
 
   if (!isPoint(userY, userX + 1)) {
-    for(int i= 0; i < length; i++) {
-        switchPoints(userX - i, userY, userX - i + 1, userY);
+    switchPoints(userX, userY, userX + 1, userY);
+    int tempY = userY, tempX = userX;
+    userX++;
+    if (ledState[userY][userX].previousLoc) {
+      ledState[userY][userX].previousLoc = LEFT;
+    }
+
+    for(int i= 1; i < length; i++) {
+      if (ledState[tempY][tempX].previousLoc == LEFT) {
+        switchPoints(tempX - 1, tempY, tempX, tempY);
+        if (ledState[tempY][tempX].previousLoc) {
+          ledState[tempY][tempX].previousLoc = LEFT;
+        }
+        tempX--;
+      }
+
+      else if (ledState[tempY][tempX].previousLoc == UP) {
+        switchPoints(tempX, tempY - 1, tempX, tempY);
+        if (ledState[tempY][tempX].previousLoc) {
+          ledState[tempY][tempX].previousLoc = UP;
+        }
+        tempY--;
       }
     }
-  }
-  
+      // ledState[userY][userX].previous->nextStep = RIGHT;
+      if(ledState[userY][userX].previous) {
+        Serial.println(ledState[userY][userX].previous->next->state);
+      }
+    }
   else {
+    userX++;
+    ledState[userY][userX - 1].state = true;
+    ledState[userY][userX].state = true;
+    ledState[userY][userX].previousLoc = LEFT;
+
+    ledState[userY][userX].previous = &ledState[userY][userX - 1];
+    ledState[userY][userX - 1].next = &ledState[userY][userX];
+
     length++;
   }
-  userX++;
+
   ledState[userY][userX].nextStep = RIGHT;
+  print_location(userY, userX);
+  printLedStates();
 }
 
 void go_left() {
@@ -222,25 +308,60 @@ void go_up() {
 }
 
 void go_down() {
-  userDirection = get_user_direction();
+  byte userDirection = get_user_direction();
+
+  if (userDirection == STABLE) {
+    userDirection = DOWN;
+  }
+
   if (userDirection == UP) {
     return;
   }
   
-
   if (!isPoint(userY + 1, userX)) {
-    if (userDirection == DOWN) {
-      for(int i=0; i < length ; i++) {
-        switchPoints(userX, userY - i, userX, userY - i + 1);
+    switchPoints(userX, userY, userX, userY + 1);
+    int tempY = userY, tempX = userX;
+    userY++;
+    if (ledState[userY][userX].previousLoc) {
+      ledState[userY][userX].previousLoc = UP;
+    }
+
+    for(int i= 1; i < length; i++) {
+      if (ledState[tempY][tempX].previousLoc == LEFT) {
+        switchPoints(tempX - 1, tempY, tempX, tempY);
+        if (ledState[tempY][tempX].previousLoc) {
+          ledState[tempY][tempX].previousLoc = LEFT;
+        }
+        tempX--;
+      }
+
+      else if (ledState[tempY][tempX].previousLoc == UP) {
+        switchPoints(tempX, tempY - 1, tempX, tempY);
+        if (ledState[tempY][tempX].previousLoc) {
+          ledState[tempY][tempX].previousLoc = UP;
+        }
+        tempY--;
       }
     }
-  }
 
+      if(ledState[userY][userX].previous) {
+        Serial.println(ledState[userY][userX].previous->next->state);
+      }
+    }
   else {
+    userY++;
+    ledState[userY - 1][userX].state = true;
+    ledState[userY][userX].state = true;
+    ledState[userY][userX].previousLoc = UP;
+
+    ledState[userY][userX].previous = &ledState[userY - 1][userX];
+    ledState[userY - 1][userX].next = &ledState[userY][userX];
+
     length++;
   }
-  userY++;
   ledState[userY][userX].nextStep = DOWN;
+  print_location(userY, userX);
+  printLedStates();
 }
 
 bool isPoint(int userY, int userX) {
