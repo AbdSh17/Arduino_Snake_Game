@@ -4,15 +4,15 @@
 // =============================== INCLUDE ===============================
 
 // =============================== DEFINE ===============================
-#define PAUSE 0
-#define LEFT 1
-#define UP 2
-#define RIGHT 3
-#define DOWN 4
-#define STABLE 5 
+const byte PAUSE = 0;
+const byte LEFT = 1;
+const byte UP = 2;
+const byte RIGHT = 3;
+const byte DOWN = 4;
+const byte STABLE = 5; 
 
-#define ROWS 8
-#define COLUMNS 8
+const byte ROWS = 8;
+const byte COLUMNS = 8;
 
 const byte apple = 1;
 const byte snake = 2;
@@ -32,22 +32,22 @@ const long moveInterval = 1;
 
 volatile bool isPaused = false;
 
-int userX = 0, userY = 0;
-int length = 1;
+byte userX = 0, userY = 0;
+byte length = 1;
 byte userDirection = STABLE;
 
 LedControl lc = LedControl(11, 13, 10, 1);
 // =============================== GLOBAL ===============================
 
 // =============================== DECLARATOIN ===============================
-int get_Direction();
-void print_location(int, int);
+byte get_Direction();
+void print_location(byte, byte);
 bool isPoint(int, int);
 bool go_down();
 bool go_up();
 bool go_left();
 bool go_right();
-void switchPoints(int, int, int, int);
+void switchPoints(byte, byte, byte, byte);
 void set_apple();
 void printGameOver();
 
@@ -85,8 +85,8 @@ void handleSwitch() {
 // }
 
 void setLedStates() {
-  for (int i = 0; i < ROWS; i++){
-    for (int j = 0; j < COLUMNS; j++){
+  for (byte i = 0; i < ROWS; i++){
+    for (byte j = 0; j < COLUMNS; j++){
       ledState[i][j].state = none;
       ledState[i][j].previousLoc = 0;
     }
@@ -158,8 +158,8 @@ void loop() {
   if (currentMillis - previousMillisMove >= moveInterval) {
     previousMillisMove = currentMillis;
     
-    int joystickDirection = get_Direction();
-    static int lastDirection = joystickDirection;
+    byte joystickDirection = get_Direction();
+    static byte lastDirection = joystickDirection;
 
     if (joystickDirection == STABLE) {
       joystickDirection = lastDirection;
@@ -200,7 +200,7 @@ void loop() {
 }
 
 void set_apple() {
-  static int row = 1, column = 0;
+  byte row = 1, column = 0;
 
   while (1) {
     row = random(0, 8);
@@ -212,7 +212,7 @@ void set_apple() {
   ledState[row][column].state = apple;
 }
 
-void switchPoints(int userX0, int userY0, int userX1, int userY1) {
+void switchPoints(byte userX0, byte userY0, byte userX1, byte userY1) {
   lc.setLed(0, userY0, userX0, false);
   ledState[userY0][userX0].state = none;
   
@@ -226,20 +226,20 @@ void switchPoints(int userX0, int userY0, int userX1, int userY1) {
 bool go_right() {
 
   if (userX == 7) {
-    return true;
+    return false;
   }
 
   byte state = getState(userY, userX + 1);
 
   if (!state) {
     switchPoints(userX, userY, userX + 1, userY);
-    int tempY = userY, tempX = userX;
+    byte tempY = userY, tempX = userX;
     userX++;
     if (ledState[userY][userX].previousLoc) {
       ledState[userY][userX].previousLoc = LEFT;
     }
 
-    for(int i= 1; i < length; i++) {
+    for(byte i= 1; i < length; i++) {
 
       if (!ledState[tempY][tempX].previousLoc) {
         ledState[tempY][tempX].state = none;
@@ -301,20 +301,20 @@ bool go_right() {
 bool go_left() {
 
   if (userX == 0) {
-    return true;
+    return false;
   }
 
   byte state = getState(userY, userX - 1);
 
   if (!state) {
     switchPoints(userX, userY, userX - 1, userY);
-    int tempY = userY, tempX = userX;
+    byte tempY = userY, tempX = userX;
     userX--;
     if (ledState[userY][userX].previousLoc) {
       ledState[userY][userX].previousLoc = RIGHT;
     }
 
-    for(int i= 1; i < length; i++) {
+    for(byte i= 1; i < length; i++) {
 
       if (ledState[tempY][tempX].previousLoc == RIGHT) {
         switchPoints(tempX + 1, tempY, tempX, tempY);
@@ -372,20 +372,20 @@ bool go_left() {
 bool go_up() {
 
   if (userY == 0) {
-    return true;
+    return false;
   }
 
   byte state = getState(userY - 1, userX);
 
   if (!state) {
     switchPoints(userX, userY, userX, userY - 1);
-    int tempY = userY, tempX = userX;
+    byte tempY = userY, tempX = userX;
     userY--;
     if (ledState[userY][userX].previousLoc) {
       ledState[userY][userX].previousLoc = DOWN;
     }
 
-    for(int i= 1; i < length; i++) {
+    for(byte i= 1; i < length; i++) {
       if (ledState[tempY][tempX].previousLoc == LEFT) {
         switchPoints(tempX - 1, tempY, tempX, tempY);
         if (ledState[tempY][tempX].previousLoc) {
@@ -441,20 +441,20 @@ bool go_up() {
 
 bool go_down() {
   if (userY == 7) {
-    return true;
+    return false;
   }
 
   byte state = getState(userY + 1, userX);
 
   if (!state) {
     switchPoints(userX, userY, userX, userY + 1);
-    int tempY = userY, tempX = userX;
+    byte tempY = userY, tempX = userX;
     userY++;
     if (ledState[userY][userX].previousLoc) {
       ledState[userY][userX].previousLoc = UP;
     }
 
-    for(int i= 1; i < length; i++) {
+    for(byte i= 1; i < length; i++) {
       if (ledState[tempY][tempX].previousLoc == LEFT) {
         switchPoints(tempX - 1, tempY, tempX, tempY);
         if (ledState[tempY][tempX].previousLoc) {
@@ -509,7 +509,7 @@ bool go_down() {
   return false;
 }
 
-byte getState(int userY, int userX) {
+byte getState(byte userY, byte userX) {
   return ledState[userY][userX].state;
 }
 
@@ -617,21 +617,21 @@ void printGameOver() {
 }
 
 void displayLetter(byte letter[8], int matrixColumn) {
-  for (int i = 0; i < 8; i++) {
+  for (byte i = 0; i < 8; i++) {
     lc.setRow(0, i, letter[i]);  // Display the letter
   }
 }
 
 void clearMatrix() {
-    for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
+    for (byte row = 0; row < 8; row++) {
+        for (byte col = 0; col < 8; col++) {
             lc.setLed(0, row, col, false);
         }
     }
 }
 
 
-void print_location(int userY, int userX) {
+void print_location(byte userY, byte userX) {
   Serial.print("( ");
   Serial.print(userY);
   Serial.print(", ");
@@ -640,7 +640,7 @@ void print_location(int userY, int userX) {
 }
 
 // function that return the current joystick state
-int get_Direction() {
+byte get_Direction() {
     int XY[2]; // array holding X, Y axis
     get_xy(XY);
     int x = XY[0], y = XY[1];
