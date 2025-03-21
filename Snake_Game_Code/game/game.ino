@@ -51,7 +51,6 @@ void switchPoints(byte, byte, byte, byte);
 void set_apple();
 void printGameOver();
 
-
 // =============================== DECLARATOIN ===============================
 
 
@@ -75,14 +74,6 @@ void handleSwitch() {
   }
   toggle = !toggle;
 }
-
-// void makeEmptyLeds() {
-//   led l = (led)malloc(sizeof(struct node));
-//   l->next = null;
-//   l->previous = null;
-//   l->state = true;
-//   l->
-// }
 
 void setLedStates() {
   for (byte i = 0; i < ROWS; i++){
@@ -113,24 +104,10 @@ void setup() {
   lc.setIntensity(0, 8);  // Set brightness (0 to 15)
   lc.clearDisplay(0);     // Clear the display
 
-
   setLedStates();
 
-    // ledState[2][0].state = true;
-    // ledState[4][0].state = true;
-    // ledState[5][5].state = true;
-    // lc.setLed(0, 5, 0, true);
-    // lc.setLed(0, 3, 0, true);
-    // lc.setLed(0, 5, 5, true);
-
-    // ledState[0][2].state = true;
-    // ledState[0][4].state = true;
-
-    // lc.setLed(0, 0, 2, true);
-    // lc.setLed(0, 0, 4, true);
-
-    lc.setLed(0, userY, userX, true);
-    ledState[userY][userX].state = snake;
+  lc.setLed(0, userY, userX, true);
+  ledState[userY][userX].state = snake;
 
 }
 
@@ -277,10 +254,9 @@ bool go_right() {
         tempY++;
       }
     }
+  }
 
-    }
   else if (state == apple) {
-    Serial.print("\nfwefegegvewgewbgewgew");
     userX++;
     ledState[userY][userX - 1].state = snake;
     ledState[userY][userX].state = snake;
@@ -455,6 +431,7 @@ bool go_down() {
     }
 
     for(byte i= 1; i < length; i++) {
+
       if (ledState[tempY][tempX].previousLoc == LEFT) {
         switchPoints(tempX - 1, tempY, tempX, tempY);
         if (ledState[tempY][tempX].previousLoc) {
