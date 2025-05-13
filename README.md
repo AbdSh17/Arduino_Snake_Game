@@ -71,4 +71,4 @@ This is a **classic arcade Snake game** where you control a snake using a **joys
 ## 📝 Code & Installation
 1. **Clone this repository**  
    ```sh
-   git clone https://github.com/your-username/snake-game-arduino.git
+   git clone https://github.com/AbdSh17/Arduino_Snake_Game/edit/main/README.md
